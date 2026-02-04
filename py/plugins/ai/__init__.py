@@ -8,7 +8,7 @@ AI 插件包初始化
 from .ai_agent import AsyncAIAgent
 
 
-async def register(router):
+def register(router):
     """
     注册 AI 插件到路由
     
