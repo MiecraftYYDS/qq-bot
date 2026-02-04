@@ -17,7 +17,7 @@ from fastapi.responses import HTMLResponse, StreamingResponse
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
 import jwt
-from passlib.hash import bcrypt
+import bcrypt
 
 from py.config import config
 from py.sqline import db_manager, get_stats
@@ -293,7 +293,7 @@ async def register_group_user(request: RegisterRequest, user: dict = Depends(get
         )
     
     # 创建用户
-    password_hash = bcrypt.hash(request.password)
+    password_hash = bcrypt.hashpw(request.password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
     await db.execute(
         """INSERT INTO webui_users (group_id, username, password_hash, role, create_time)
            VALUES (?, ?, ?, 'user', ?)""",
@@ -333,7 +333,7 @@ async def group_login(request: GroupLoginRequest):
             detail="用户名或密码错误"
         )
     
-    if not bcrypt.verify(request.password, user[0]):
+    if not bcrypt.checkpw(request.password.encode('utf-8'), user[0].encode('utf-8')):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="用户名或密码错误"
