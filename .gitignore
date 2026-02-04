@@ -10,6 +10,7 @@ venv/
 *.egg-info/
 dist/
 build/
+backup/
 
 # 数据库文件（包含用户数据，不应上传）
 sqline/*.db

@@ -100,9 +100,9 @@ async def test_config(result: TestResult):
         from py.config import config
         
         result.add("配置文件加载", True)
-        result.add(f"Bot QQ: {config.bot.qq}", config.bot.qq > 0, "QQ号无效")
+        result.add(f"Bot QQ: {config.bot.qq_id}", config.bot.qq_id > 0, "QQ号无效")
         result.add(f"服务端口: {config.server.port}", 1 <= config.server.port <= 65535)
-        result.add(f"OneBot URL: {config.onebot.url}", config.onebot.url.startswith("http"))
+        result.add(f"OneBot URL: {config.onebot.api_url}", config.onebot.api_url.startswith("http"))
         
     except Exception as e:
         result.add("配置文件加载", False, str(e))
@@ -119,15 +119,13 @@ async def test_database(result: TestResult):
         result.add("数据库初始化", True)
         
         # 测试连接
-        async with db_manager.data_pool.connection() as conn:
-            cursor = await conn.execute("SELECT 1")
-            row = await cursor.fetchone()
-            result.add("data.db 连接", row is not None and row[0] == 1)
+        data_db = await db_manager.get_db('data')
+        row = await data_db.fetchone("SELECT 1")
+        result.add("data.db 连接", row is not None and row[0] == 1)
         
-        async with db_manager.set_pool.connection() as conn:
-            cursor = await conn.execute("SELECT 1")
-            row = await cursor.fetchone()
-            result.add("set.db 连接", row is not None and row[0] == 1)
+        set_db = await db_manager.get_db('set')
+        row = await set_db.fetchone("SELECT 1")
+        result.add("set.db 连接", row is not None and row[0] == 1)
         
         await db_manager.close_all()
         result.add("数据库关闭", True)
@@ -141,9 +139,9 @@ async def test_onebot_connection(result: TestResult):
     print("\n🔗 测试 OneBot 连接...")
     
     try:
-        from py.onebot_api import api
+        from py.onebot_api import onebot
         
-        info = await api.get_login_info()
+        info = await onebot.get_login_info()
         if info and "user_id" in info:
             result.add(f"OneBot 连接 (QQ: {info.get('user_id')})", True)
         else:
