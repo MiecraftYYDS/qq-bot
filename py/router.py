@@ -264,6 +264,16 @@ async def webhook(request: Request, background_tasks: BackgroundTasks):
     OneBot 事件接收端点
     支持多个路径: /webhook, /onebot, /
     """
+    # Token 验证
+    if config.onebot.token:
+        auth_header = request.headers.get("Authorization", "")
+        expected = f"Bearer {config.onebot.token}"
+        if auth_header != expected:
+            # 也检查 X-Signature 方式（某些 OneBot 实现使用）
+            signature = request.headers.get("X-Signature", "")
+            if not signature:
+                return {"status": "error", "message": "Unauthorized"}
+    
     try:
         data = await request.json()
         event = OneBotEvent(**data)
