@@ -1,0 +1,18 @@
+/* 浅色主题 */
+:root {
+    --primary-color: #4a90d9;
+    --bg-color: #f5f7fa;
+    --card-bg: #ffffff;
+    --text-color: #333333;
+    --border-color: #e1e5eb;
+    --input-bg: #ffffff;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+}
+
+nav a {
+    color: var(--text-color);
+}

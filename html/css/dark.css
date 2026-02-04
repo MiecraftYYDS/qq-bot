@@ -1,0 +1,36 @@
+/* 深色主题 */
+:root {
+    --primary-color: #5c9ded;
+    --bg-color: #1a1a2e;
+    --card-bg: #16213e;
+    --text-color: #e8e8e8;
+    --border-color: #2d3a5a;
+    --input-bg: #1a1a2e;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+}
+
+nav a {
+    color: var(--text-color);
+}
+
+.message.success {
+    background: #1e4d2b;
+    color: #a3d9a5;
+    border-color: #2d5a3b;
+}
+
+.message.error {
+    background: #4d1e1e;
+    color: #d9a3a3;
+    border-color: #5a2d2d;
+}
+
+.message.info {
+    background: #1e3d4d;
+    color: #a3c9d9;
+    border-color: #2d4d5a;
+}

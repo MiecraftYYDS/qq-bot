@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>群管登录 - QQ Bot</title>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/light.css" id="theme-style">
+    <style>
+        .login-btn {
+            display: block;
+            text-decoration: none;
+            padding: 25px 30px;
+            border-radius: 12px;
+            text-align: center;
+            transition: all 0.3s ease;
+            border: 2px solid var(--primary-color);
+            background: var(--card-bg);
+            color: inherit;
+            margin-bottom: 20px;
+        }
+        .login-btn:hover {
+            background: var(--primary-color);
+            color: white;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+        .login-btn h3 {
+            font-size: 1.3rem;
+            margin-bottom: 10px;
+        }
+        .login-btn p {
+            opacity: 0.8;
+            font-size: 0.95rem;
+        }
+        .login-btn:last-child {
+            margin-bottom: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔐 群管理员登录</h1>
+            <nav>
+                <a href="home.html">首页</a>
+                <a href="visitor_view.html">实时统计</a>
+                <a href="g_loginmode.html" class="active">群管登录</a>
+                <a href="a_login.html">管理员</a>
+                <button id="theme-toggle" onclick="toggleTheme()">🌙</button>
+            </nav>
+        </header>
+        
+        <main>
+            <section class="status" style="max-width: 500px; margin: 50px auto;">
+                <h2>选择操作</h2>
+                <p style="margin-bottom: 30px; opacity: 0.8;">群管理员可以登录管理群内的机器人设置</p>
+                
+                <div class="login-options">
+                    <a href="g_login.html" class="login-btn">
+                        <h3>🔑 账号密码登录</h3>
+                        <p>已有账号？直接登录</p>
+                    </a>
+                    
+                    <a href="g_register.html" class="login-btn">
+                        <h3>📝 注册新账号</h3>
+                        <p>验证群管理员身份后注册账号</p>
+                    </a>
+                </div>
+                
+                <div style="margin-top: 40px; padding: 20px; background: var(--input-bg); border-radius: 8px;">
+                    <h4>💡 注册流程</h4>
+                    <ol style="text-align: left; margin-top: 15px; padding-left: 20px;">
+                        <li>输入你管理的群号</li>
+                        <li>网页显示一个 6 位验证码</li>
+                        <li><strong>私聊</strong>机器人发送该验证码</li>
+                        <li>机器人验证你是否为群管理员</li>
+                        <li>验证通过后设置账号密码</li>
+                    </ol>
+                </div>
+            </section>
+        </main>
+        
+        <footer>
+            <p>QQ Bot &copy; 2026</p>
+        </footer>
+    </div>
+    
+    <script>
+        function toggleTheme() {
+            const link = document.getElementById('theme-style');
+            const btn = document.getElementById('theme-toggle');
+            if (link.href.includes('light.css')) {
+                link.href = 'css/dark.css';
+                btn.textContent = '☀️';
+                localStorage.setItem('theme', 'dark');
+            } else {
+                link.href = 'css/light.css';
+                btn.textContent = '🌙';
+                localStorage.setItem('theme', 'light');
+            }
+        }
+        
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark') {
+            document.getElementById('theme-style').href = 'css/dark.css';
+            document.getElementById('theme-toggle').textContent = '☀️';
+        }
+        
+        // 检查是否已登录
+        const token = localStorage.getItem('token');
+        if (token) {
+            fetch('/api/auth/me', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            }).then(r => {
+                if (r.ok) window.location.href = 'groups.html';
+            }).catch(() => {});
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>账号登录 - QQ Bot</title>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/light.css" id="theme-style">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔑 账号登录</h1>
+            <nav>
+                <a href="home.html">首页</a>
+                <a href="visitor_view.html">实时统计</a>
+                <a href="g_loginmode.html" class="active">群管登录</a>
+                <a href="a_login.html">管理员</a>
+                <button id="theme-toggle" onclick="toggleTheme()">🌙</button>
+            </nav>
+        </header>
+        
+        <main>
+            <section class="status" style="max-width: 450px; margin: 50px auto;">
+                <h2>群管理员登录</h2>
+                <p style="margin-bottom: 20px; opacity: 0.8;">使用已注册的账号密码登录</p>
+                
+                <form id="loginForm" style="margin-top: 30px;">
+                    <div class="form-group">
+                        <label for="username">用户名</label>
+                        <input type="text" id="username" name="username" placeholder="请输入用户名" required />
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="password">密码</label>
+                        <input type="password" id="password" name="password" placeholder="请输入密码" required />
+                    </div>
+                    
+                    <div id="error-msg" class="alert" style="display: none;"></div>
+                    
+                    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 20px;">
+                        登录
+                    </button>
+                </form>
+                
+                <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--border-color); text-align: center;">
+                    <p style="font-size: 0.9em; opacity: 0.7;">
+                        还没有账号？<a href="g_register.html">注册新账号</a>
+                    </p>
+                </div>
+                
+                <p style="margin-top: 20px; font-size: 0.9em; opacity: 0.7;">
+                    <a href="g_loginmode.html">← 返回</a>
+                </p>
+            </section>
+        </main>
+        
+        <footer>
+            <p>QQ Bot &copy; 2026</p>
+        </footer>
+    </div>
+    
+    <script>
+        function toggleTheme() {
+            const link = document.getElementById('theme-style');
+            const btn = document.getElementById('theme-toggle');
+            if (link.href.includes('light.css')) {
+                link.href = 'css/dark.css';
+                btn.textContent = '☀️';
+                localStorage.setItem('theme', 'dark');
+            } else {
+                link.href = 'css/light.css';
+                btn.textContent = '🌙';
+                localStorage.setItem('theme', 'light');
+            }
+        }
+        
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark') {
+            document.getElementById('theme-style').href = 'css/dark.css';
+            document.getElementById('theme-toggle').textContent = '☀️';
+        }
+        
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const errorDiv = document.getElementById('error-msg');
+            
+            errorDiv.style.display = 'none';
+            
+            try {
+                const resp = await fetch('/api/auth/group-login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                const data = await resp.json();
+                
+                if (data.access_token) {
+                    localStorage.setItem('token', data.access_token);
+                    localStorage.setItem('role', data.role);
+                    window.location.href = 'groups.html';
+                } else {
+                    errorDiv.textContent = data.detail || data.message || '登录失败';
+                    errorDiv.style.display = 'block';
+                }
+            } catch (err) {
+                errorDiv.textContent = '网络错误，请稍后重试';
+                errorDiv.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>

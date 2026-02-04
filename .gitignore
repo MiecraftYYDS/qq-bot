@@ -1,0 +1,52 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+*.egg-info/
+dist/
+build/
+
+# 数据库文件（包含用户数据，不应上传）
+sqline/*.db
+sqline/*.db-shm
+sqline/*.db-wal
+*.db
+
+# 敏感配置（包含密钥，绝对不能上传）
+config.yml
+
+# 生成的文件
+qtp/
+qtppng/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# 系统文件
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 日志
+*.log
+logs/
+
+# 测试文件
+test_*.png
+test_*.jpg
+
+# 备份文件（可选择性上传）
+# backup/
+
+# 临时文件
+*.tmp
+*.temp

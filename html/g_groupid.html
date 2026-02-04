@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>添加管理群 - QQ Bot</title>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/light.css" id="theme-style">
+    <style>
+        .verify-code {
+            font-size: 3rem;
+            font-weight: bold;
+            letter-spacing: 1rem;
+            text-align: center;
+            padding: 30px;
+            background: var(--card-bg);
+            border: 2px dashed var(--primary-color);
+            border-radius: 12px;
+            margin: 30px 0;
+            user-select: all;
+            color: var(--primary-color);
+        }
+        .waiting-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+            padding: 15px;
+            background: var(--input-bg);
+            border-radius: 8px;
+        }
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 3px solid var(--border-color);
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .success-box {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .countdown {
+            font-size: 0.9em;
+            opacity: 0.7;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>➕ 添加管理群</h1>
+            <nav>
+                <a href="home.html">首页</a>
+                <a href="visitor_view.html">实时统计</a>
+                <a href="g_loginmode.html">群管登录</a>
+                <a href="a_login.html">管理员</a>
+                <button id="theme-toggle" onclick="toggleTheme()">🌙</button>
+            </nav>
+        </header>
+        
+        <main>
+            <!-- 步骤 1: 输入群号 -->
+            <section id="step1" class="status" style="max-width: 500px; margin: 50px auto;">
+                <h2>添加新的管理群</h2>
+                <p style="margin-bottom: 20px; opacity: 0.8;">验证你是该群的管理员后，即可添加到你的管理列表</p>
+                
+                <form id="groupForm" style="margin-top: 30px;">
+                    <div class="form-group">
+                        <label for="group_id">群号</label>
+                        <input type="text" id="group_id" name="group_id" placeholder="请输入要添加的群号" required pattern="[0-9]+" />
+                    </div>
+                    
+                    <div id="error-msg" class="alert" style="display: none;"></div>
+                    
+                    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 20px;">
+                        获取验证码
+                    </button>
+                </form>
+                
+                <p style="margin-top: 20px; font-size: 0.9em; opacity: 0.7;">
+                    <a href="groups.html">← 返回群列表</a>
+                </p>
+            </section>
+            
+            <!-- 步骤 2: 显示验证码等待验证 -->
+            <section id="step2" class="status" style="max-width: 500px; margin: 50px auto; display: none;">
+                <h2>私聊机器人验证</h2>
+                <p style="opacity: 0.8;">群号: <strong id="display-group"></strong></p>
+                
+                <div class="verify-code" id="display-code">------</div>
+                
+                <div class="waiting-indicator" id="waiting">
+                    <div class="spinner"></div>
+                    <span>等待验证中...</span>
+                </div>
+                
+                <div id="success-msg" class="success-box" style="display: none;">
+                    <h3>✅ 添加成功！</h3>
+                    <p>正在跳转到群列表...</p>
+                </div>
+                
+                <div class="countdown" id="countdown">验证码有效期: <span id="time-left">5:00</span></div>
+                
+                <ol style="text-align: left; margin-top: 25px; padding: 20px; background: var(--input-bg); border-radius: 8px;">
+                    <li style="margin-bottom: 10px;"><strong>复制上方验证码</strong></li>
+                    <li style="margin-bottom: 10px;"><strong>私聊</strong>机器人，发送验证码（直接发数字）</li>
+                    <li style="margin-bottom: 10px;">机器人会检查你是否为该群管理员</li>
+                    <li>验证通过后自动添加到你的管理列表</li>
+                </ol>
+                
+                <p style="margin-top: 20px; font-size: 0.9em;">
+                    <a href="#" onclick="location.reload()">← 重新输入群号</a>
+                </p>
+            </section>
+        </main>
+        
+        <footer>
+            <p>QQ Bot &copy; 2026</p>
+        </footer>
+    </div>
+    
+    <script>
+        function toggleTheme() {
+            const link = document.getElementById('theme-style');
+            const btn = document.getElementById('theme-toggle');
+            if (link.href.includes('light.css')) {
+                link.href = 'css/dark.css';
+                btn.textContent = '☀️';
+                localStorage.setItem('theme', 'dark');
+            } else {
+                link.href = 'css/light.css';
+                btn.textContent = '🌙';
+                localStorage.setItem('theme', 'light');
+            }
+        }
+        
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark') {
+            document.getElementById('theme-style').href = 'css/dark.css';
+            document.getElementById('theme-toggle').textContent = '☀️';
+        }
+        
+        // 检查登录状态
+        const token = localStorage.getItem('token');
+        if (!token) {
+            alert('请先登录');
+            window.location.href = 'g_loginmode.html';
+        }
+        
+        let currentCode = null;
+        let pollInterval = null;
+        let countdownInterval = null;
+        let expireTime = null;
+        
+        document.getElementById('groupForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const groupId = document.getElementById('group_id').value.trim();
+            const errorDiv = document.getElementById('error-msg');
+            
+            if (!/^\d+$/.test(groupId)) {
+                errorDiv.textContent = '请输入有效的群号（纯数字）';
+                errorDiv.style.display = 'block';
+                return;
+            }
+            
+            try {
+                const resp = await fetch('/api/auth/gen-code', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: JSON.stringify({ group_id: parseInt(groupId) })
+                });
+                
+                const data = await resp.json();
+                
+                if (data.code) {
+                    currentCode = data.code;
+                    document.getElementById('display-group').textContent = groupId;
+                    document.getElementById('display-code').textContent = data.code;
+                    document.getElementById('step1').style.display = 'none';
+                    document.getElementById('step2').style.display = 'block';
+                    
+                    // 倒计时
+                    expireTime = Date.now() + 5 * 60 * 1000;
+                    updateCountdown();
+                    countdownInterval = setInterval(updateCountdown, 1000);
+                    
+                    // 轮询
+                    startPolling(groupId);
+                } else {
+                    errorDiv.textContent = data.message || '获取验证码失败';
+                    errorDiv.style.display = 'block';
+                }
+            } catch (err) {
+                errorDiv.textContent = '网络错误，请稍后重试';
+                errorDiv.style.display = 'block';
+            }
+        });
+        
+        function updateCountdown() {
+            const remaining = Math.max(0, expireTime - Date.now());
+            const minutes = Math.floor(remaining / 60000);
+            const seconds = Math.floor((remaining % 60000) / 1000);
+            document.getElementById('time-left').textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            
+            if (remaining <= 0) {
+                clearInterval(countdownInterval);
+                clearInterval(pollInterval);
+                alert('验证码已过期，请重新获取');
+                location.reload();
+            }
+        }
+        
+        function startPolling(groupId) {
+            pollInterval = setInterval(async () => {
+                try {
+                    const resp = await fetch(`/api/auth/check-status?code=${currentCode}`);
+                    const data = await resp.json();
+                    
+                    if (data.status === 'verified' || data.access_token) {
+                        // 验证成功，添加群到用户管理列表
+                        clearInterval(pollInterval);
+                        clearInterval(countdownInterval);
+                        
+                        // 调用添加群的 API
+                        const addResp = await fetch('/api/user/add-group', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': 'Bearer ' + token
+                            },
+                            body: JSON.stringify({ group_id: parseInt(groupId) })
+                        });
+                        
+                        document.getElementById('waiting').style.display = 'none';
+                        document.getElementById('countdown').style.display = 'none';
+                        document.getElementById('success-msg').style.display = 'block';
+                        
+                        setTimeout(() => {
+                            window.location.href = 'groups.html';
+                        }, 1500);
+                    }
+                } catch (err) {
+                    // 忽略
+                }
+            }, 2000);
+        }
+    </script>
+</body>
+</html>

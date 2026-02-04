@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理员登录 - QQ Bot</title>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/light.css" id="theme-style">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🛡️ 管理员登录</h1>
+            <nav>
+                <a href="home.html">首页</a>
+                <a href="visitor_view.html">实时统计</a>
+                <a href="g_loginmode.html">群管登录</a>
+                <a href="a_login.html" class="active">管理员</a>
+                <button id="theme-toggle" onclick="toggleTheme()">🌙</button>
+            </nav>
+        </header>
+        
+        <main>
+            <section class="status" style="max-width: 450px; margin: 50px auto;">
+                <h2>管理员登录</h2>
+                <p style="margin-bottom: 20px; opacity: 0.8;">使用管理员账号登录以访问完整控制面板</p>
+                
+                <form id="loginForm" style="margin-top: 30px;">
+                    <div class="form-group">
+                        <label for="secret_key">管理密钥</label>
+                        <input type="password" id="secret_key" name="secret_key" placeholder="请输入管理密钥 (config.yml 中的 secret_key)" required />
+                    </div>
+                    
+                    <div id="error-msg" class="alert" style="display: none;"></div>
+                    
+                    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 20px;">
+                        登录
+                    </button>
+                </form>
+                
+                <div style="margin-top: 20px; padding: 15px; background: var(--input-bg); border-radius: 8px; font-size: 0.9em;">
+                    <p>💡 管理密钥在 <code>config.yml</code> 的 <code>auth.secret_key</code> 中配置</p>
+                </div>
+                
+                <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--border-color);">
+                    <p style="font-size: 0.9em; opacity: 0.7;">
+                        不是管理员？<a href="g_loginmode.html">群管理员登录</a>
+                    </p>
+                </div>
+            </section>
+        </main>
+        
+        <footer>
+            <p>QQ Bot &copy; 2026</p>
+        </footer>
+    </div>
+    
+    <script>
+        function toggleTheme() {
+            const link = document.getElementById('theme-style');
+            const btn = document.getElementById('theme-toggle');
+            if (link.href.includes('light.css')) {
+                link.href = 'css/dark.css';
+                btn.textContent = '☀️';
+                localStorage.setItem('theme', 'dark');
+            } else {
+                link.href = 'css/light.css';
+                btn.textContent = '🌙';
+                localStorage.setItem('theme', 'light');
+            }
+        }
+        
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark') {
+            document.getElementById('theme-style').href = 'css/dark.css';
+            document.getElementById('theme-toggle').textContent = '☀️';
+        }
+        
+        // 检查是否已登录
+        const token = localStorage.getItem('token');
+        if (token) {
+            // 验证 token 是否有效
+            fetch('/api/admin/info', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            }).then(r => r.json()).then(data => {
+                if (data.role === 'admin') {
+                    window.location.href = 'admin.html';
+                }
+            }).catch(() => {});
+        }
+        
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const secretKey = document.getElementById('secret_key').value;
+            const errorDiv = document.getElementById('error-msg');
+            
+            errorDiv.style.display = 'none';
+            
+            try {
+                const resp = await fetch('/api/auth/admin-login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ key: secretKey })
+                });
+                
+                const data = await resp.json();
+                
+                if (data.access_token) {
+                    localStorage.setItem('token', data.access_token);
+                    localStorage.setItem('role', 'admin');
+                    window.location.href = 'admin.html';
+                } else {
+                    errorDiv.textContent = data.detail || data.message || '密钥错误';
+                    errorDiv.style.display = 'block';
+                }
+            } catch (err) {
+                errorDiv.textContent = '网络错误，请稍后重试';
+                errorDiv.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>

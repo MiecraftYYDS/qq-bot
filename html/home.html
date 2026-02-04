@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QQ Bot 控制面板</title>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/light.css" id="theme-style">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🤖 QQ Bot 控制面板</h1>
+            <nav>
+                <a href="home.html" class="active">首页</a>
+                <a href="visitor_view.html">实时统计</a>
+                <a href="g_loginmode.html">群管登录</a>
+                <a href="a_login.html">管理员</a>
+                <button id="theme-toggle" onclick="toggleTheme()">🌙</button>
+            </nav>
+        </header>
+        
+        <main>
+            <section class="hero">
+                <h2>欢迎使用 QQ 机器人管理系统</h2>
+                <p>一个功能丰富的 QQ 群聊机器人</p>
+            </section>
+            
+            <section class="features">
+                <div class="feature-card">
+                    <h3>🎯 核心功能</h3>
+                    <ul>
+                        <li>AI 智能对话</li>
+                        <li>词云生成</li>
+                        <li>语录图片</li>
+                        <li>群管理工具</li>
+                    </ul>
+                </div>
+                
+                <div class="feature-card">
+                    <h3>⚙️ 群设置</h3>
+                    <ul>
+                        <li>入群欢迎</li>
+                        <li>退群公告</li>
+                        <li>申请广播</li>
+                        <li>功能开关</li>
+                    </ul>
+                </div>
+                
+                <div class="feature-card">
+                    <h3>📊 数据统计</h3>
+                    <ul>
+                        <li>消息统计</li>
+                        <li>实时监控</li>
+                        <li>使用分析</li>
+                    </ul>
+                </div>
+            </section>
+            
+            <section class="status" id="bot-status">
+                <h3>机器人状态</h3>
+                <div class="status-grid">
+                    <div class="status-item">
+                        <span class="label">版本</span>
+                        <span class="value" id="bot-version">加载中...</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="label">消息总数</span>
+                        <span class="value" id="total-messages">-</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="label">运行时间</span>
+                        <span class="value" id="uptime">-</span>
+                    </div>
+                </div>
+            </section>
+        </main>
+        
+        <footer>
+            <p>QQ Bot &copy; 2026</p>
+        </footer>
+    </div>
+    
+    <script>
+        // 主题切换
+        function toggleTheme() {
+            const link = document.getElementById('theme-style');
+            const btn = document.getElementById('theme-toggle');
+            if (link.href.includes('light.css')) {
+                link.href = 'css/dark.css';
+                btn.textContent = '☀️';
+                localStorage.setItem('theme', 'dark');
+            } else {
+                link.href = 'css/light.css';
+                btn.textContent = '🌙';
+                localStorage.setItem('theme', 'light');
+            }
+        }
+        
+        // 加载保存的主题
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark') {
+            document.getElementById('theme-style').href = 'css/dark.css';
+            document.getElementById('theme-toggle').textContent = '☀️';
+        }
+        
+        // 加载状态
+        async function loadStatus() {
+            try {
+                const resp = await fetch('/api/stats/init');
+                const data = await resp.json();
+                
+                document.getElementById('bot-version').textContent = data.bot_version;
+                document.getElementById('total-messages').textContent = data.total_messages.toLocaleString();
+                
+                // 计算运行时间
+                const startTime = data.start_time * 1000;
+                const uptime = Date.now() - startTime;
+                const days = Math.floor(uptime / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((uptime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                document.getElementById('uptime').textContent = `${days}天${hours}小时`;
+            } catch (e) {
+                console.error('加载状态失败:', e);
+            }
+        }
+        
+        loadStatus();
+    </script>
+</body>
+</html>

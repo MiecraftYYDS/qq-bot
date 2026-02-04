@@ -1,0 +1,14 @@
+plugins:
+  after_album:
+    - plugin: thumbs_cleaner
+      kwargs: {}
+    - plugin: img2pdf
+      kwargs:
+        pdf_dir: D:/jm/
+        filename_rule: Aid
+        ignore_error: true
+        check_image: true
+        convert_webp: false
+        delete_source: false
+    - plugin: delete_images_after_pdf 
+      kwargs: {}

@@ -1,0 +1,149 @@
+# =============================================
+# 机器人全局配置文件 (示例)
+# 复制此文件为 config.yml 并填入你的配置
+# =============================================
+
+# OneBot HTTP API 配置
+onebot:
+  api_url: "http://127.0.0.1:3000"   # OneBot 实现的 HTTP API 地址
+  token: "your_token_here"           # 鉴权 Token，需与 OneBot 配置一致
+
+# 机器人基本信息
+bot:
+  qq_id: 123456789        # 机器人 QQ 号
+  admin_qq: 987654321     # 机器人管理员 QQ 号
+  version: "13.0.0"       # 版本号
+
+# 智谱 AI 配置
+zhipu:
+  api_key: "your_zhipu_api_key_here"  # 智谱 AI API Key
+  model: "glm-4.5-air"                 # 使用的模型
+
+# 服务器配置
+server:
+  host: "0.0.0.0"   # 监听地址
+  port: 8080        # 监听端口
+
+# 数据库设置
+database:
+  # 是否保留上次运行的设置
+  # true: 保留 set.db 中的设置（重启后继续使用上次的群设置）
+  # false: 每次启动重置 set.db（使用下方 default_group_settings 的默认值）
+  keep_previous_settings: true
+
+# JWT 鉴权配置 (WebUI 使用)
+auth:
+  secret_key: "change_this_to_a_random_secret_key"  # 必须修改！
+  algorithm: "HS256"
+  access_token_expire_minutes: 1440  # 24小时
+
+# 资源路径配置
+paths:
+  font_msyh: "resource/msyh.ttc"
+  font_tsuka: "resource/TsukuA.ttc"
+  quote_base: "resource/quote_base.png"
+  qtp_output: "qtp/"
+
+# 全局功能开关 (关闭后所有群都不可用)
+global_features:
+  ai: true              # AI 对话功能
+  wordcloud: true       # 词云功能
+  quote: true           # 语录图片功能
+  essence: true         # 精华消息功能
+  banme: true           # 禁言抽奖功能
+  repeat: true          # 复读功能
+  poke: true            # 戳一戳/趣味互动
+  jm: false             # JM 漫画下载（默认关闭）
+  welcome: true         # 入群欢迎
+  farewell: true        # 退群提醒
+  checkin: true         # 签到功能
+
+# 新群默认设置 (当 keep_previous_settings=false 或新群加入时使用)
+default_group_settings:
+  broadcast_admin_changes: false  # 管理员变更广播
+  welcome_message: true           # 入群欢迎
+  farewell_message: false         # 退群提醒
+  broadcast_join_request: true    # 入群申请广播
+  wordcloud_count_english: false  # 词云统计英文
+  wordcloud_count_single_char: false  # 词云统计单字
+  jm_enabled: false               # JM 功能
+  ai_enabled: true                # AI 功能
+  repeat_enabled: true            # 复读功能
+  poke_enabled: true              # 戳一戳功能
+  banme_enabled: true             # 禁言抽奖
+  quote_enabled: true             # 语录功能
+  essence_enabled: true           # 精华功能
+
+# 复读概率设置 (全局默认值)
+repeat_settings:
+  repeat_probability: 0.3         # 复读触发概率，0.3 = 30%
+  exclamation_probability: 0.15   # 感叹号变体复读概率，0.15 = 15%
+# 注：群内可单独设置，未设置的群使用此全局值
+
+# 旧配置兼容
+features:
+  report_data: false
+  parse_cq_code: true
+
+# 停用词配置 (词云)
+stopwords:
+  - "的"
+  - "了"
+  - "在"
+  - "是"
+  - "我"
+  - "你"
+  - "他"
+  - "她"
+  - "它"
+  - "我们"
+  - "你们"
+  - "他们"
+  - "就"
+  - "都"
+  - "而"
+  - "及"
+  - "与"
+  - "或"
+  - "也"
+  - "还"
+  - "又"
+  - "不"
+  - "没"
+  - "有"
+  - "能"
+  - "会"
+  - "可以"
+  - "要"
+  - "将"
+  - "把"
+  - "被"
+  - "让"
+  - "和"
+  - "跟"
+  - "同"
+  - "对"
+  - "关于"
+  - "这"
+  - "那"
+  - "个"
+  - "只"
+  - "回复"
+  - "引用"
+  - "图片"
+  - "语音"
+  - "视频"
+  - "文件"
+  - "链接"
+  - "cy"
+  - "cyyy"
+  - "cydz"
+  - "settings"
+  - "selfset"
+  - "mute"
+  - "jj"
+  - "tx"
+  - "ping"
+  - "help"
+  - "吗"
+  - "啊"

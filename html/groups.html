@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>群设置 - QQ Bot</title>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/light.css" id="theme-style">
+    <style>
+        .settings-section {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border-color);
+        }
+        .settings-section h3 {
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .setting-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .setting-row:last-child {
+            border-bottom: none;
+        }
+        .setting-label {
+            flex: 1;
+        }
+        .setting-label h4 {
+            margin-bottom: 5px;
+        }
+        .setting-label p {
+            font-size: 0.85em;
+            opacity: 0.7;
+        }
+        .toggle-switch {
+            position: relative;
+            width: 50px;
+            height: 26px;
+        }
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: 0.3s;
+            border-radius: 26px;
+        }
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+        }
+        .toggle-switch input:checked + .toggle-slider {
+            background-color: var(--primary-color);
+        }
+        .toggle-switch input:checked + .toggle-slider:before {
+            transform: translateX(24px);
+        }
+        .input-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .input-group input {
+            width: 80px;
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            background: var(--input-bg);
+            color: var(--text-color);
+            text-align: center;
+        }
+        .group-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        .group-header h2 {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .group-id {
+            font-size: 0.7em;
+            opacity: 0.6;
+            font-weight: normal;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>⚙️ 群设置</h1>
+            <nav>
+                <a href="home.html">首页</a>
+                <a href="visitor_view.html">实时统计</a>
+                <a href="groups.html" class="active">群设置</a>
+                <a href="#" onclick="logout()">退出</a>
+                <button id="theme-toggle" onclick="toggleTheme()">🌙</button>
+            </nav>
+        </header>
+        
+        <main>
+            <div class="group-header">
+                <h2 id="group-name">
+                    加载中...
+                    <span class="group-id" id="group-id-display"></span>
+                </h2>
+                <button class="btn" onclick="saveAllSettings()">💾 保存设置</button>
+            </div>
+            
+            <!-- 基础设置 -->
+            <section class="settings-section">
+                <h3>📌 基础设置</h3>
+                
+                <div class="setting-row">
+                    <div class="setting-label">
+                        <h4>机器人开关</h4>
+                        <p>关闭后机器人将不再响应本群消息</p>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="set-enabled" data-key="enabled">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                
+                <div class="setting-row">
+                    <div class="setting-label">
+                        <h4>欢迎新成员</h4>
+                        <p>新成员入群时发送欢迎消息</p>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="set-welcome" data-key="welcome">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                
+                <div class="setting-row">
+                    <div class="setting-label">
+                        <h4>退群提醒</h4>
+                        <p>成员退群时发送提醒</p>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="set-leave-notice" data-key="leave_notice">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </section>
+            
+            <!-- AI 设置 -->
+            <section class="settings-section">
+                <h3>🤖 AI 设置</h3>
+                
+                <div class="setting-row">
+                    <div class="setting-label">
+                        <h4>AI 功能</h4>
+                        <p>启用 AI 对话功能</p>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="set-ai" data-key="ai_enabled">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                
+                <div class="setting-row">
+                    <div class="setting-label">
+                        <h4>AI 人设</h4>
+                        <p>选择 AI 的回复风格</p>
+                    </div>
+                    <select id="set-ai-persona" data-key="ai_persona" style="padding: 8px 15px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color);">
+                        <option value="cat">🐱 猫娘</option>
+                        <option value="expert">👨‍💼 专家</option>
+                        <option value="default">📝 默认</option>
+                    </select>
+                </div>
+                
+                <div class="setting-row">
+                    <div class="setting-label">
+                        <h4>AI 冷却时间</h4>
+                        <p>两次 AI 调用之间的最小间隔（秒）</p>
+                    </div>
+                    <div class="input-group">
+                        <input type="number" id="set-ai-cooldown" data-key="ai_cooldown" min="0" max="300" value="10">
+                        <span>秒</span>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- 功能开关 -->
+            <section class="settings-section">
+                <h3>🎮 功能开关</h3>
+                
+                <div class="setting-row">
+                    <div class="setting-label">
+                        <h4>复读功能</h4>
+                        <p>自动复读相同消息</p>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="set-repeat" data-key="repeat_enabled">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                
+                <div class="setting-row">
+                    <div class="setting-label">
+                        <h4>戳一戳</h4>
+                        <p>响应戳一戳消息</p>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="set-poke" data-key="poke_enabled">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                
+                <div class="setting-row">
+                    <div class="setting-label">
+                        <h4>禁言抽奖</h4>
+                        <p>允许 /禁我 功能</p>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="set-banme" data-key="banme_enabled">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                
+                <div class="setting-row">
+                    <div class="setting-label">
+                        <h4>每日签到</h4>
+                        <p>允许 /签到 功能</p>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="set-sign" data-key="sign_enabled">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                
+                <div class="setting-row">
+                    <div class="setting-label">
+                        <h4>抽签功能</h4>
+                        <p>允许 /抽签 /求签 功能</p>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="set-fortune" data-key="fortune_enabled">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </section>
+            
+            <!-- 限制设置 -->
+            <section class="settings-section">
+                <h3>🔒 限制设置</h3>
+                
+                <div class="setting-row">
+                    <div class="setting-label">
+                        <h4>复读阈值</h4>
+                        <p>触发复读需要的相同消息数</p>
+                    </div>
+                    <div class="input-group">
+                        <input type="number" id="set-repeat-count" data-key="repeat_count" min="2" max="10" value="3">
+                        <span>条</span>
+                    </div>
+                </div>
+                
+                <div class="setting-row">
+                    <div class="setting-label">
+                        <h4>最大禁言时间</h4>
+                        <p>/禁我 功能的最大禁言时长</p>
+                    </div>
+                    <div class="input-group">
+                        <input type="number" id="set-max-ban" data-key="max_ban_time" min="1" max="1440" value="60">
+                        <span>分钟</span>
+                    </div>
+                </div>
+            </section>
+            
+            <div id="save-status" style="text-align: center; margin-top: 20px; display: none;" class="alert"></div>
+        </main>
+        
+        <footer>
+            <p>QQ Bot &copy; 2026</p>
+        </footer>
+    </div>
+    
+    <script>
+        const token = localStorage.getItem('token');
+        const urlParams = new URLSearchParams(window.location.search);
+        let groupId = urlParams.get('id') || localStorage.getItem('group_id');
+        
+        if (!token || !groupId) {
+            window.location.href = 'g_loginmode.html';
+        }
+        
+        function toggleTheme() {
+            const link = document.getElementById('theme-style');
+            const btn = document.getElementById('theme-toggle');
+            if (link.href.includes('light.css')) {
+                link.href = 'css/dark.css';
+                btn.textContent = '☀️';
+                localStorage.setItem('theme', 'dark');
+            } else {
+                link.href = 'css/light.css';
+                btn.textContent = '🌙';
+                localStorage.setItem('theme', 'light');
+            }
+        }
+        
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark') {
+            document.getElementById('theme-style').href = 'css/dark.css';
+            document.getElementById('theme-toggle').textContent = '☀️';
+        }
+        
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('group_id');
+            window.location.href = 'g_loginmode.html';
+        }
+        
+        async function authFetch(url, options = {}) {
+            options.headers = options.headers || {};
+            options.headers['Authorization'] = 'Bearer ' + token;
+            const resp = await fetch(url, options);
+            if (resp.status === 401) {
+                logout();
+                return null;
+            }
+            return resp.json();
+        }
+        
+        async function loadGroupSettings() {
+            const data = await authFetch(`/api/group/${groupId}/settings`);
+            if (!data) return;
+            
+            document.getElementById('group-name').innerHTML = `
+                ${data.group_name || '群聊'}
+                <span class="group-id">#${groupId}</span>
+            `;
+            document.getElementById('group-id-display').textContent = '';
+            
+            // 填充设置
+            const settings = data.settings || {};
+            
+            document.getElementById('set-enabled').checked = settings.enabled !== false;
+            document.getElementById('set-welcome').checked = settings.welcome === true;
+            document.getElementById('set-leave-notice').checked = settings.leave_notice === true;
+            document.getElementById('set-ai').checked = settings.ai_enabled !== false;
+            document.getElementById('set-ai-persona').value = settings.ai_persona || 'cat';
+            document.getElementById('set-ai-cooldown').value = settings.ai_cooldown || 10;
+            document.getElementById('set-repeat').checked = settings.repeat_enabled !== false;
+            document.getElementById('set-poke').checked = settings.poke_enabled !== false;
+            document.getElementById('set-banme').checked = settings.banme_enabled !== false;
+            document.getElementById('set-sign').checked = settings.sign_enabled !== false;
+            document.getElementById('set-fortune').checked = settings.fortune_enabled !== false;
+            document.getElementById('set-repeat-count').value = settings.repeat_count || 3;
+            document.getElementById('set-max-ban').value = settings.max_ban_time || 60;
+        }
+        
+        async function saveAllSettings() {
+            const settings = {};
+            
+            // 收集所有设置
+            document.querySelectorAll('[data-key]').forEach(el => {
+                const key = el.dataset.key;
+                if (el.type === 'checkbox') {
+                    settings[key] = el.checked;
+                } else if (el.type === 'number') {
+                    settings[key] = parseInt(el.value);
+                } else {
+                    settings[key] = el.value;
+                }
+            });
+            
+            const statusDiv = document.getElementById('save-status');
+            
+            try {
+                const result = await authFetch(`/api/group/${groupId}/settings`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(settings)
+                });
+                
+                if (result && result.success) {
+                    statusDiv.textContent = '✓ 设置已保存';
+                    statusDiv.style.background = '#d4edda';
+                    statusDiv.style.color = '#155724';
+                } else {
+                    statusDiv.textContent = '✗ 保存失败: ' + (result?.message || '未知错误');
+                    statusDiv.style.background = '#f8d7da';
+                    statusDiv.style.color = '#721c24';
+                }
+            } catch (e) {
+                statusDiv.textContent = '✗ 网络错误';
+                statusDiv.style.background = '#f8d7da';
+                statusDiv.style.color = '#721c24';
+            }
+            
+            statusDiv.style.display = 'block';
+            setTimeout(() => { statusDiv.style.display = 'none'; }, 3000);
+        }
+        
+        loadGroupSettings();
+    </script>
+</body>
+</html>

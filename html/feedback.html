@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>反馈建议 - QQ Bot</title>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/light.css" id="theme-style">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>💬 反馈建议</h1>
+            <nav>
+                <a href="home.html">首页</a>
+                <a href="visitor_view.html">实时统计</a>
+                <a href="g_loginmode.html">群管登录</a>
+                <a href="a_login.html">管理员</a>
+                <button id="theme-toggle" onclick="toggleTheme()">🌙</button>
+            </nav>
+        </header>
+        
+        <main>
+            <section class="status" style="max-width: 600px; margin: 30px auto;">
+                <h2>提交反馈</h2>
+                <p style="margin-bottom: 30px; opacity: 0.8;">你的反馈对我们很重要！请告诉我们你的想法、建议或遇到的问题。</p>
+                
+                <form id="feedbackForm">
+                    <div class="form-group">
+                        <label for="feedback-type">反馈类型</label>
+                        <select id="feedback-type" name="type" required style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color);">
+                            <option value="">请选择...</option>
+                            <option value="bug">🐛 Bug 报告</option>
+                            <option value="feature">✨ 功能建议</option>
+                            <option value="improve">📈 改进意见</option>
+                            <option value="other">💭 其他</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="contact">联系方式（可选）</label>
+                        <input type="text" id="contact" name="contact" placeholder="QQ 号或邮箱，方便我们回复你" />
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="content">反馈内容</label>
+                        <textarea id="content" name="content" placeholder="请详细描述你的反馈..." required style="width: 100%; height: 200px; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color); resize: vertical;"></textarea>
+                    </div>
+                    
+                    <div id="error-msg" class="alert" style="display: none;"></div>
+                    <div id="success-msg" style="display: none; padding: 15px; background: #d4edda; color: #155724; border-radius: 8px; margin-bottom: 15px;"></div>
+                    
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">
+                        提交反馈
+                    </button>
+                </form>
+            </section>
+            
+            <!-- 常见问题 -->
+            <section class="status" style="max-width: 600px; margin: 30px auto;">
+                <h2>❓ 常见问题</h2>
+                
+                <div style="margin-top: 20px;">
+                    <details style="margin-bottom: 15px; padding: 15px; background: var(--input-bg); border-radius: 8px;">
+                        <summary style="cursor: pointer; font-weight: bold;">机器人不回复消息怎么办？</summary>
+                        <p style="margin-top: 10px; padding-left: 15px;">
+                            1. 检查机器人是否在线<br>
+                            2. 确认群内机器人功能已开启<br>
+                            3. 检查是否触发了冷却时间<br>
+                            4. 尝试 @机器人 或使用指令前缀
+                        </p>
+                    </details>
+                    
+                    <details style="margin-bottom: 15px; padding: 15px; background: var(--input-bg); border-radius: 8px;">
+                        <summary style="cursor: pointer; font-weight: bold;">如何成为群管理员？</summary>
+                        <p style="margin-top: 10px; padding-left: 15px;">
+                            群主或管理员身份由 QQ 群本身决定。如果你是群主或管理员，可以通过发送 <code>/验证码</code> 获取登录凭证来管理本群的机器人设置。
+                        </p>
+                    </details>
+                    
+                    <details style="margin-bottom: 15px; padding: 15px; background: var(--input-bg); border-radius: 8px;">
+                        <summary style="cursor: pointer; font-weight: bold;">AI 回复速度慢？</summary>
+                        <p style="margin-top: 10px; padding-left: 15px;">
+                            AI 回复需要调用外部接口，可能受网络状况影响。如果长时间未收到回复，可能是：<br>
+                            1. AI 服务暂时不可用<br>
+                            2. 问题过于复杂需要更长处理时间<br>
+                            3. 触发了频率限制
+                        </p>
+                    </details>
+                    
+                    <details style="margin-bottom: 15px; padding: 15px; background: var(--input-bg); border-radius: 8px;">
+                        <summary style="cursor: pointer; font-weight: bold;">如何邀请机器人入群？</summary>
+                        <p style="margin-top: 10px; padding-left: 15px;">
+                            请联系机器人管理员，提供你的群号和简单的入群理由。管理员审核通过后会将机器人添加到你的群。
+                        </p>
+                    </details>
+                </div>
+            </section>
+        </main>
+        
+        <footer>
+            <p>QQ Bot &copy; 2026</p>
+        </footer>
+    </div>
+    
+    <script>
+        function toggleTheme() {
+            const link = document.getElementById('theme-style');
+            const btn = document.getElementById('theme-toggle');
+            if (link.href.includes('light.css')) {
+                link.href = 'css/dark.css';
+                btn.textContent = '☀️';
+                localStorage.setItem('theme', 'dark');
+            } else {
+                link.href = 'css/light.css';
+                btn.textContent = '🌙';
+                localStorage.setItem('theme', 'light');
+            }
+        }
+        
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark') {
+            document.getElementById('theme-style').href = 'css/dark.css';
+            document.getElementById('theme-toggle').textContent = '☀️';
+        }
+        
+        document.getElementById('feedbackForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const type = document.getElementById('feedback-type').value;
+            const contact = document.getElementById('contact').value.trim();
+            const content = document.getElementById('content').value.trim();
+            
+            const errorDiv = document.getElementById('error-msg');
+            const successDiv = document.getElementById('success-msg');
+            
+            errorDiv.style.display = 'none';
+            successDiv.style.display = 'none';
+            
+            if (!content) {
+                errorDiv.textContent = '请输入反馈内容';
+                errorDiv.style.display = 'block';
+                return;
+            }
+            
+            try {
+                const resp = await fetch('/api/feedback', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type, contact, content })
+                });
+                
+                const data = await resp.json();
+                
+                if (data.success) {
+                    successDiv.textContent = '✓ 反馈已提交，感谢你的支持！';
+                    successDiv.style.display = 'block';
+                    document.getElementById('feedbackForm').reset();
+                } else {
+                    errorDiv.textContent = data.message || '提交失败，请稍后重试';
+                    errorDiv.style.display = 'block';
+                }
+            } catch (err) {
+                errorDiv.textContent = '网络错误，请稍后重试';
+                errorDiv.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>
