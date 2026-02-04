@@ -257,9 +257,12 @@ async def process_event(event: OneBotEvent):
 
 
 @router.post("/webhook")
+@router.post("/onebot")
+@router.post("/")
 async def webhook(request: Request, background_tasks: BackgroundTasks):
     """
     OneBot 事件接收端点
+    支持多个路径: /webhook, /onebot, /
     """
     try:
         data = await request.json()
