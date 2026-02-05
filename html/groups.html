@@ -308,8 +308,10 @@
         const urlParams = new URLSearchParams(window.location.search);
         let groupId = urlParams.get('id') || localStorage.getItem('group_id');
         
-        if (!token || !groupId) {
+        // 确保 groupId 有效（不是 null、undefined 或字符串 "null"）
+        if (!token || !groupId || groupId === 'null' || groupId === 'undefined') {
             window.location.href = 'g_loginmode.html';
+            throw new Error('Invalid group_id');  // 阻止后续代码执行
         }
         
         function toggleTheme() {
@@ -350,7 +352,7 @@
         }
         
         async function loadGroupSettings() {
-            const data = await authFetch(`/api/group/${groupId}/settings`);
+            const data = await authFetch(`/api/groups/${groupId}/settings`);
             if (!data) return;
             
             document.getElementById('group-name').innerHTML = `
@@ -395,7 +397,7 @@
             const statusDiv = document.getElementById('save-status');
             
             try {
-                const result = await authFetch(`/api/group/${groupId}/settings`, {
+                const result = await authFetch(`/api/groups/${groupId}/settings`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(settings)

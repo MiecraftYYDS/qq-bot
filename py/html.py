@@ -137,13 +137,16 @@ async def get_initial_stats():
 @html_router.get("/stats/stream")
 async def stats_stream():
     """SSE 统计数据流"""
+    import json
     async def event_generator():
         queue = event_bus.subscribe()
         try:
             while True:
                 try:
                     event = await asyncio.wait_for(queue.get(), timeout=30.0)
-                    yield f"data: {event}\n\n"
+                    # 确保输出为 JSON 字符串
+                    event_str = json.dumps(event) if isinstance(event, dict) else str(event)
+                    yield f"data: {event_str}\n\n"
                 except asyncio.TimeoutError:
                     # 发送心跳
                     yield f": heartbeat\n\n"
@@ -378,7 +381,16 @@ async def get_group_settings(group_id: int, user: dict = Depends(get_current_use
     from py.setting import GroupSettings
     settings = await GroupSettings.get_all_settings(group_id)
     
-    return {"group_id": group_id, "settings": settings}
+    # 尝试获取群名称
+    group_name = str(group_id)
+    try:
+        group_info = await onebot.get_group_info(group_id)
+        if group_info:
+            group_name = group_info.get("group_name", str(group_id))
+    except:
+        pass
+    
+    return {"group_id": group_id, "group_name": group_name, "settings": settings}
 
 
 @html_router.post("/groups/{group_id}/settings")
@@ -396,10 +408,59 @@ async def update_group_settings(group_id: int, settings: dict, user: dict = Depe
         if key in GroupSettings.SETTING_FIELDS:
             await GroupSettings.set_setting(group_id, key, bool(value))
     
-    return {"status": "ok"}
+    return {"success": True, "status": "ok"}
 
 
 # ==================== 管理员接口 ====================
+
+@html_router.get("/admin/dashboard")
+async def admin_dashboard(user: dict = Depends(require_role("admin"))):
+    """获取管理员仪表板数据"""
+    db = await db_manager.get_db('set')
+    
+    # 获取群数量
+    groups_rows = await db.fetchall("SELECT DISTINCT group_id FROM group_settings")
+    total_groups = len(groups_rows)
+    
+    # 获取用户数量
+    try:
+        users_row = await db.fetchone("SELECT COUNT(*) FROM webui_users")
+        total_users = users_row[0] if users_row else 0
+    except:
+        total_users = 0
+    
+    # 获取今日消息数（从统计数据）
+    stats = await get_stats()
+    today_messages = stats.get("today_messages", stats.get("total_messages", 0))
+    
+    # 获取群列表（带名称）
+    groups = []
+    for row in groups_rows:
+        group_id = row[0]
+        # 尝试从 onebot 获取群信息
+        try:
+            group_info = await onebot.get_group_info(group_id)
+            groups.append({
+                "id": group_id,
+                "name": group_info.get("group_name", str(group_id)) if group_info else str(group_id),
+                "member_count": group_info.get("member_count", 0) if group_info else 0
+            })
+        except:
+            groups.append({"id": group_id, "name": str(group_id), "member_count": 0})
+    
+    return {
+        "total_groups": total_groups,
+        "total_users": total_users,
+        "today_messages": today_messages,
+        "active_plugins": 9,  # 固定插件数
+        "settings": {
+            "enabled": True,
+            "ai_enabled": True,
+            "debug": config.bot.debug if hasattr(config.bot, 'debug') else False
+        },
+        "groups": groups
+    }
+
 
 @html_router.get("/admin/groups")
 async def admin_get_groups(user: dict = Depends(require_role("admin"))):
