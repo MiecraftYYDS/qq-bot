@@ -25,6 +25,7 @@ async def handle_group_message(event):
     group_id = event.group_id
     user_id = event.user_id
     message_id = event.message_id
+    self_id = event.self_id
     
     # #ping - 状态检查
     if raw_msg.strip() == '#ping':
@@ -123,7 +124,7 @@ async def handle_group_message(event):
     # #tx - 设置头衔（仅群主）
     tx_match = re.match(r'^#tx\s+(?:\[CQ:at,qq=(\d+)\]|(\d+))\s*(.*)$', raw_msg.strip())
     if tx_match:
-        member_info = await onebot.get_group_member_info(group_id, user_id)
+        member_info = await onebot.get_group_member_info(group_id, self_id)
         if not member_info or member_info.get('role') != 'owner':
             await send_group_msg(group_id, "❌ 此命令仅限群主使用")
             return True

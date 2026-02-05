@@ -30,14 +30,7 @@ MOMO_REPLIES = [
     "你的手好温暖~",
 ]
 
-# 踩背回复列表
-CCB_REPLIES = [
-    "踩踩踩~",
-    "好舒服喵~",
-    "要轻一点哦~",
-    "嗯...这里...再用力一点~",
-    "（猫咪踩奶中）",
-]
+
 
 # 戳一戳回复列表
 POKE_REPLIES = [
@@ -72,9 +65,8 @@ async def handle_group_message(event):
         return True
     
     # 踩背
-    if raw_msg.strip() in ('ccb', '踩背', '踩踩背'):
-        reply = random.choice(CCB_REPLIES)
-        await send_group_msg(group_id, reply)
+    if raw_msg.strip() in ('ccb', 'CCB', '踩踩背'):
+        await send_group_msg(group_id, "踩背!")
         return True
     
     return False
@@ -124,9 +116,7 @@ if __name__ == "__main__":
     for i, reply in enumerate(MOMO_REPLIES, 1):
         print(f"  {i}. {reply}")
     
-    print("\n📝 踩背回复列表:")
-    for i, reply in enumerate(CCB_REPLIES, 1):
-        print(f"  {i}. {reply}")
+    
     
     print("\n📝 戳一戳回复列表:")
     for i, reply in enumerate(POKE_REPLIES, 1):
@@ -134,7 +124,7 @@ if __name__ == "__main__":
     
     print("\n🎲 随机测试:")
     print(f"  摸摸: {random.choice(MOMO_REPLIES)}")
-    print(f"  踩背: {random.choice(CCB_REPLIES)}")
     print(f"  戳一戳: {random.choice(POKE_REPLIES)}")
+    print(f"  踩背: 踩背!")
     
     print("\n✅ 插件模块加载正常")
