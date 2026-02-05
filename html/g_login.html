@@ -101,7 +101,8 @@
                 
                 if (data.access_token) {
                     localStorage.setItem('token', data.access_token);
-                    localStorage.setItem('role', data.role);
+                    if (data.group_id) localStorage.setItem('group_id', data.group_id);
+                    localStorage.setItem('role', data.role || 'user');
                     window.location.href = 'groups.html';
                 } else {
                     errorDiv.textContent = data.detail || data.message || '登录失败';

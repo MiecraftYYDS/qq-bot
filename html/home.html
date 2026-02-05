@@ -104,7 +104,19 @@
             document.getElementById('theme-toggle').textContent = '☀️';
         }
         
-        // 加载状态
+        function startUptimeUpdater(startTime) {
+            function update() {
+                const uptime = Date.now() - (startTime * 1000);
+                const days = Math.floor(uptime / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((uptime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const mins = Math.floor((uptime % (1000 * 60 * 60)) / (1000 * 60));
+                document.getElementById('uptime').textContent = `${days}天${hours}时${mins}分`;
+            }
+            update();
+            setInterval(update, 60000);
+        }
+        
+        // 加载状态 + SSE 实时更新
         async function loadStatus() {
             try {
                 const resp = await fetch('/api/stats/init');
@@ -112,16 +124,32 @@
                 
                 document.getElementById('bot-version').textContent = data.bot_version;
                 document.getElementById('total-messages').textContent = data.total_messages.toLocaleString();
+                startUptimeUpdater(data.start_time);
                 
-                // 计算运行时间
-                const startTime = data.start_time * 1000;
-                const uptime = Date.now() - startTime;
-                const days = Math.floor(uptime / (1000 * 60 * 60 * 24));
-                const hours = Math.floor((uptime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                document.getElementById('uptime').textContent = `${days}天${hours}小时`;
+                startEventStream();
             } catch (e) {
                 console.error('加载状态失败:', e);
+                setTimeout(loadStatus, 5000);
             }
+        }
+        
+        function startEventStream() {
+            const es = new EventSource('/api/stats/stream');
+            es.onmessage = function(e) {
+                try {
+                    const data = JSON.parse(e.data);
+                    if (data.type === 'recv') {
+                        const current = parseInt(document.getElementById('total-messages').textContent.replace(/,/g, '')) || 0;
+                        document.getElementById('total-messages').textContent = (current + 1).toLocaleString();
+                    }
+                } catch (_) {
+                    // 忽略解析错误
+                }
+            };
+            es.onerror = function() {
+                es.close();
+                setTimeout(startEventStream, 5000);
+            };
         }
         
         loadStatus();

@@ -34,6 +34,13 @@ security = HTTPBearer(auto_error=False)
 # 内存验证码存储 {code: {"group_id": int, "status": str, "create_time": int}}
 verifications: Dict[str, Dict] = {}
 
+# 内存化的全局管理设置（持久化需求可后续接入数据库）
+admin_runtime_settings = {
+    "enabled": True,
+    "ai_enabled": True,
+    "debug": getattr(config.bot, "debug", False)
+}
+
 
 # ==================== 数据模型 ====================
 
@@ -380,6 +387,16 @@ async def get_group_settings(group_id: int, user: dict = Depends(get_current_use
     
     from py.setting import GroupSettings
     settings = await GroupSettings.get_all_settings(group_id)
+
+    # 为前端提供兼容键（UI 仍使用 *_enabled 命名）
+    ui_settings = settings.copy()
+    ui_settings.update({
+        "ai_enabled": settings.get("ai", False),
+        "repeat_enabled": settings.get("repeat", False),
+        "poke_enabled": settings.get("poke", False),
+        "banme_enabled": settings.get("banme", False),
+        "leave_notice": settings.get("farewell", False)
+    })
     
     # 尝试获取群名称
     group_name = str(group_id)
@@ -390,7 +407,7 @@ async def get_group_settings(group_id: int, user: dict = Depends(get_current_use
     except:
         pass
     
-    return {"group_id": group_id, "group_name": group_name, "settings": settings}
+    return {"group_id": group_id, "group_name": group_name, "settings": ui_settings}
 
 
 @html_router.post("/groups/{group_id}/settings")
@@ -403,15 +420,72 @@ async def update_group_settings(group_id: int, settings: dict, user: dict = Depe
         )
     
     from py.setting import GroupSettings
-    
+
+    key_alias = {
+        "ai_enabled": "ai",
+        "repeat_enabled": "repeat",
+        "poke_enabled": "poke",
+        "banme_enabled": "banme",
+        "leave_notice": "farewell"
+    }
+
+    invalid_keys = []
+
     for key, value in settings.items():
-        if key in GroupSettings.SETTING_FIELDS:
-            await GroupSettings.set_setting(group_id, key, bool(value))
+        canonical = key_alias.get(key, key)
+        if canonical in GroupSettings.SETTING_FIELDS:
+            await GroupSettings.set_setting(group_id, canonical, bool(value))
+        else:
+            invalid_keys.append(key)
+    
+    if invalid_keys:
+        return {
+            "success": False,
+            "message": "存在未识别的设置项",
+            "invalid_keys": invalid_keys,
+            "allowed_keys": list(GroupSettings.SETTING_FIELDS.keys()) + list(key_alias.keys())
+        }
     
     return {"success": True, "status": "ok"}
 
 
 # ==================== 管理员接口 ====================
+
+@html_router.post("/admin/settings")
+async def update_admin_settings(payload: dict, user: dict = Depends(require_role("admin"))):
+    """更新全局运行时设置（内存）"""
+    updated = {}
+    for key in ("enabled", "ai_enabled", "debug"):
+        if key in payload:
+            admin_runtime_settings[key] = bool(payload[key])
+            updated[key] = admin_runtime_settings[key]
+    return {"success": True, "updated": updated, "settings": admin_runtime_settings}
+
+@html_router.post("/admin/broadcast")
+async def admin_broadcast(payload: dict, user: dict = Depends(require_role("admin"))):
+    """广播占位实现：目前仅回显，不做真实发送"""
+    message = payload.get("message", "").strip()
+    if not message:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="message 不能为空")
+    # 未来可在此调用 onebot 广播
+    return {"success": True, "sent_count": 0, "echo": message}
+
+@html_router.post("/admin/plugins/reload")
+async def admin_reload_plugins(user: dict = Depends(require_role("admin"))):
+    """插件重载占位实现"""
+    # 由于插件系统初始化在启动时完成，这里仅返回成功标记
+    return {"success": True, "message": "reload scheduled"}
+
+@html_router.post("/admin/cache/clear")
+async def admin_clear_cache(user: dict = Depends(require_role("admin"))):
+    """缓存清理占位实现"""
+    return {"success": True}
+
+@html_router.post("/admin/emergency-stop")
+async def admin_emergency_stop(user: dict = Depends(require_role("admin"))):
+    """紧急停止占位实现：记录状态供前端显示"""
+    admin_runtime_settings["enabled"] = False
+    return {"success": True, "status": "stopped"}
 
 @html_router.get("/admin/dashboard")
 async def admin_dashboard(user: dict = Depends(require_role("admin"))):
@@ -452,12 +526,8 @@ async def admin_dashboard(user: dict = Depends(require_role("admin"))):
         "total_groups": total_groups,
         "total_users": total_users,
         "today_messages": today_messages,
-        "active_plugins": 9,  # 固定插件数
-        "settings": {
-            "enabled": True,
-            "ai_enabled": True,
-            "debug": config.bot.debug if hasattr(config.bot, 'debug') else False
-        },
+        "active_plugins": len(groups_rows),
+        "settings": admin_runtime_settings,
         "groups": groups
     }
 

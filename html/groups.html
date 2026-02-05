@@ -381,10 +381,16 @@
         
         async function saveAllSettings() {
             const settings = {};
+            const allowedKeys = ['welcome', 'leave_notice', 'ai_enabled', 'repeat_enabled', 'poke_enabled', 'banme_enabled'];
+            const skipped = [];
             
-            // 收集所有设置
+            // 收集所有设置，仅发送后端支持的键
             document.querySelectorAll('[data-key]').forEach(el => {
                 const key = el.dataset.key;
+                if (!allowedKeys.includes(key)) {
+                    skipped.push(key);
+                    return;
+                }
                 if (el.type === 'checkbox') {
                     settings[key] = el.checked;
                 } else if (el.type === 'number') {
@@ -404,11 +410,14 @@
                 });
                 
                 if (result && result.success) {
-                    statusDiv.textContent = '✓ 设置已保存';
+                    const skippedMsg = skipped.length ? `（已忽略: ${skipped.join(', ')}）` : '';
+                    statusDiv.textContent = '✓ 设置已保存' + skippedMsg;
                     statusDiv.style.background = '#d4edda';
                     statusDiv.style.color = '#155724';
                 } else {
-                    statusDiv.textContent = '✗ 保存失败: ' + (result?.message || '未知错误');
+                    const invalid = result?.invalid_keys ? ` 未识别: ${result.invalid_keys.join(', ')}` : '';
+                    const allowed = result?.allowed_keys ? ` 可用键: ${result.allowed_keys.join(', ')}` : '';
+                    statusDiv.textContent = '✗ 保存失败: ' + (result?.message || '未知错误') + invalid + allowed;
                     statusDiv.style.background = '#f8d7da';
                     statusDiv.style.color = '#721c24';
                 }
