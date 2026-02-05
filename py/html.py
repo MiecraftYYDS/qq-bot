@@ -141,6 +141,36 @@ async def get_initial_stats():
     }
 
 
+@html_router.get("/stats/system")
+async def get_system_stats():
+    """获取服务器资源使用情况"""
+    try:
+        import psutil  # 可选依赖
+    except ImportError:
+        return {
+            "cpu": None,
+            "mem_used": None,
+            "mem_total": None,
+            "net_sent": None,
+            "net_recv": None,
+            "available": False,
+            "message": "psutil 未安装"
+        }
+
+    cpu = psutil.cpu_percent(interval=None)
+    mem = psutil.virtual_memory()
+    net = psutil.net_io_counters()
+
+    return {
+        "cpu": cpu,
+        "mem_used": mem.used,
+        "mem_total": mem.total,
+        "net_sent": net.bytes_sent,
+        "net_recv": net.bytes_recv,
+        "available": True
+    }
+
+
 @html_router.get("/stats/stream")
 async def stats_stream():
     """SSE 统计数据流"""

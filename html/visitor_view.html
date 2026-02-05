@@ -41,6 +41,21 @@
                     <div class="number" id="uptime">-</div>
                     <div class="label">运行时间</div>
                 </div>
+
+                <div class="stat-card">
+                    <div class="number" id="cpu-usage">-</div>
+                    <div class="label">CPU 使用</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="number" id="mem-usage">-</div>
+                    <div class="label">内存使用</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="number" id="net-io">-</div>
+                    <div class="label">网络(上/下)</div>
+                </div>
             </section>
             
             <section class="status" style="margin-top: 30px;">
@@ -92,6 +107,8 @@
                 
                 // 启动 SSE
                 startEventStream();
+                // 启动系统指标轮询
+                pollSystemStats();
             } catch (e) {
                 console.error('加载失败:', e);
             }
@@ -134,6 +151,32 @@
                 statusBox.innerHTML = '<p style="color: #dc3545;">✗ 连接断开，正在重连...</p>';
                 setTimeout(startEventStream, 5000);
             };
+        }
+
+        // 服务器资源轮询
+        async function pollSystemStats() {
+            try {
+                const resp = await fetch('/api/stats/system');
+                const data = await resp.json();
+                if (data.available) {
+                    document.getElementById('cpu-usage').textContent = data.cpu.toFixed(1) + '%';
+                    const usedGB = data.mem_used / 1024 / 1024 / 1024;
+                    const totalGB = data.mem_total / 1024 / 1024 / 1024;
+                    document.getElementById('mem-usage').textContent = usedGB.toFixed(1) + ' / ' + totalGB.toFixed(1) + ' GB';
+                    const upMB = data.net_sent / 1024 / 1024;
+                    const downMB = data.net_recv / 1024 / 1024;
+                    document.getElementById('net-io').textContent = upMB.toFixed(1) + '↑ / ' + downMB.toFixed(1) + '↓ MB';
+                } else {
+                    document.getElementById('cpu-usage').textContent = '-';
+                    document.getElementById('mem-usage').textContent = data.message || '不可用';
+                    document.getElementById('net-io').textContent = '-';
+                }
+            } catch (e) {
+                document.getElementById('cpu-usage').textContent = '-';
+                document.getElementById('mem-usage').textContent = '获取失败';
+                document.getElementById('net-io').textContent = '-';
+            }
+            setTimeout(pollSystemStats, 5000);
         }
         
         loadInitialStats();
