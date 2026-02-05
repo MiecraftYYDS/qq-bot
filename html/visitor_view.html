@@ -107,8 +107,7 @@
                 
                 // 启动 SSE
                 startEventStream();
-                // 启动系统指标轮询
-                pollSystemStats();
+                startSystemStream();
             } catch (e) {
                 console.error('加载失败:', e);
             }
@@ -153,12 +152,12 @@
             };
         }
 
-        // 服务器资源轮询
-        async function pollSystemStats() {
-            try {
-                const resp = await fetch('/api/stats/system');
-                const data = await resp.json();
-                if (data.available) {
+        // 服务器资源 SSE
+        function startSystemStream() {
+            const es = new EventSource('/api/stats/system/stream');
+            es.onmessage = function(e) {
+                try {
+                    const data = JSON.parse(e.data);
                     document.getElementById('cpu-usage').textContent = data.cpu.toFixed(1) + '%';
                     const usedGB = data.mem_used / 1024 / 1024 / 1024;
                     const totalGB = data.mem_total / 1024 / 1024 / 1024;
@@ -166,17 +165,12 @@
                     const upMB = data.net_sent / 1024 / 1024;
                     const downMB = data.net_recv / 1024 / 1024;
                     document.getElementById('net-io').textContent = upMB.toFixed(1) + '↑ / ' + downMB.toFixed(1) + '↓ MB';
-                } else {
-                    document.getElementById('cpu-usage').textContent = '-';
-                    document.getElementById('mem-usage').textContent = data.message || '不可用';
-                    document.getElementById('net-io').textContent = '-';
-                }
-            } catch (e) {
-                document.getElementById('cpu-usage').textContent = '-';
-                document.getElementById('mem-usage').textContent = '获取失败';
-                document.getElementById('net-io').textContent = '-';
-            }
-            setTimeout(pollSystemStats, 5000);
+                } catch (_) {}
+            };
+            es.onerror = function() {
+                es.close();
+                setTimeout(startSystemStream, 5000);
+            };
         }
         
         loadInitialStats();

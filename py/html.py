@@ -9,6 +9,7 @@ WebUI API 模块
 import time
 import asyncio
 import secrets
+import json
 from typing import Dict, Optional
 from datetime import datetime, timedelta
 
@@ -23,6 +24,7 @@ from py.config import config
 from py.sqline import db_manager, get_stats
 from py.onebot_api import onebot
 from py.router import event_bus
+from py.admin_state import admin_state
 
 
 # 创建路由器
@@ -33,13 +35,6 @@ security = HTTPBearer(auto_error=False)
 
 # 内存验证码存储 {code: {"group_id": int, "status": str, "create_time": int}}
 verifications: Dict[str, Dict] = {}
-
-# 内存化的全局管理设置（持久化需求可后续接入数据库）
-admin_runtime_settings = {
-    "enabled": True,
-    "ai_enabled": True,
-    "debug": getattr(config.bot, "debug", False)
-}
 
 
 # ==================== 数据模型 ====================
@@ -197,6 +192,39 @@ async def stats_stream():
             "Cache-Control": "no-cache",
             "Connection": "keep-alive"
         }
+    )
+
+
+@html_router.get("/stats/system/stream")
+async def stats_system_stream():
+    """SSE 服务器资源流（3s 推送一次）"""
+    try:
+        import psutil
+    except ImportError:
+        raise HTTPException(status_code=503, detail="psutil 未安装")
+
+    async def event_generator():
+        try:
+            while True:
+                cpu = psutil.cpu_percent(interval=None)
+                mem = psutil.virtual_memory()
+                net = psutil.net_io_counters()
+                payload = {
+                    "cpu": cpu,
+                    "mem_used": mem.used,
+                    "mem_total": mem.total,
+                    "net_sent": net.bytes_sent,
+                    "net_recv": net.bytes_recv,
+                }
+                yield f"data: {json.dumps(payload)}\n\n"
+                await asyncio.sleep(3)
+        except asyncio.CancelledError:
+            return
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "Connection": "keep-alive"}
     )
 
 
@@ -487,9 +515,15 @@ async def update_admin_settings(payload: dict, user: dict = Depends(require_role
     updated = {}
     for key in ("enabled", "ai_enabled", "debug"):
         if key in payload:
-            admin_runtime_settings[key] = bool(payload[key])
-            updated[key] = admin_runtime_settings[key]
-    return {"success": True, "updated": updated, "settings": admin_runtime_settings}
+            setattr(admin_state, key, bool(payload[key]))
+            updated[key] = getattr(admin_state, key)
+            # 同步部分配置，便于旧逻辑读取
+            if key == "ai_enabled":
+                try:
+                    config.global_features.ai = bool(payload[key])
+                except Exception:
+                    pass
+    return {"success": True, "updated": updated, "settings": admin_state.__dict__}
 
 @html_router.post("/admin/broadcast")
 async def admin_broadcast(payload: dict, user: dict = Depends(require_role("admin"))):
@@ -514,7 +548,7 @@ async def admin_clear_cache(user: dict = Depends(require_role("admin"))):
 @html_router.post("/admin/emergency-stop")
 async def admin_emergency_stop(user: dict = Depends(require_role("admin"))):
     """紧急停止占位实现：记录状态供前端显示"""
-    admin_runtime_settings["enabled"] = False
+    admin_state.enabled = False
     return {"success": True, "status": "stopped"}
 
 @html_router.get("/admin/dashboard")
@@ -557,7 +591,7 @@ async def admin_dashboard(user: dict = Depends(require_role("admin"))):
         "total_users": total_users,
         "today_messages": today_messages,
         "active_plugins": len(groups_rows),
-        "settings": admin_runtime_settings,
+        "settings": admin_state.__dict__,
         "groups": groups
     }
 

@@ -15,6 +15,7 @@ from pydantic import BaseModel
 from .config import config
 from .sqline import add_group_message, update_stats
 from .onebot_api import onebot
+from .admin_state import admin_state
 
 
 # 创建路由器
@@ -218,6 +219,9 @@ event_bus = EventBus()
 
 async def process_event(event: OneBotEvent):
     """处理 OneBot 事件"""
+    # 全局运行时开关：关闭时直接忽略
+    if not admin_state.enabled:
+        return
     post_type = event.post_type
     
     if post_type == 'message':

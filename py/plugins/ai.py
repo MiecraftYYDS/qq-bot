@@ -21,6 +21,7 @@ from py.onebot_api import send_group_msg, send_private_msg
 from py.sqline import db_manager
 from py.selfset import SelfSettings
 from py.setting import GroupSettings
+from py.admin_state import admin_state
 
 from .ai.ai_agent import create_agent
 
@@ -133,8 +134,9 @@ async def handle_group_message(event):
         question = js_match.group(1)
         
         # 检查全局开关
-        if not config.global_features.ai:
-            return False
+        if not config.global_features.ai or not admin_state.ai_enabled:
+            await send_group_msg(group_id, "❌ AI 功能已关闭")
+            return True
         
         # 检查群开关
         if not await GroupSettings.get_setting(group_id, 'ai'):
@@ -158,7 +160,7 @@ async def handle_group_message(event):
     at_pattern = rf'\[CQ:at,qq={config.bot.qq_id}\]'
     if re.search(at_pattern, raw_msg):
         # 检查全局开关
-        if not config.global_features.ai:
+        if not config.global_features.ai or not admin_state.ai_enabled:
             return False
         
         # 检查群开关

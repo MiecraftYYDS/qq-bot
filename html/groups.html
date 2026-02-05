@@ -307,11 +307,24 @@
         const token = localStorage.getItem('token');
         const urlParams = new URLSearchParams(window.location.search);
         let groupId = urlParams.get('id') || localStorage.getItem('group_id');
-        
-        // 确保 groupId 有效（不是 null、undefined 或字符串 "null"）
-        if (!token || !groupId || groupId === 'null' || groupId === 'undefined') {
-            window.location.href = 'g_loginmode.html';
-            throw new Error('Invalid group_id');  // 阻止后续代码执行
+
+        // 如果缺少 groupId，尝试从后端获取可管理的首个群，避免跳转死循环
+        async function ensureGroupId() {
+            if (token && (!groupId || groupId === 'null' || groupId === 'undefined')) {
+                const resp = await fetch('/api/user/groups', { headers: { 'Authorization': 'Bearer ' + token } });
+                if (resp.ok) {
+                    const data = await resp.json();
+                    if (data.groups && data.groups.length > 0) {
+                        groupId = data.groups[0];
+                        localStorage.setItem('group_id', groupId);
+                        return;
+                    }
+                }
+            }
+            if (!token || !groupId || groupId === 'null' || groupId === 'undefined') {
+                window.location.href = 'g_loginmode.html';
+                throw new Error('Invalid group_id');
+            }
         }
         
         function toggleTheme() {
@@ -431,7 +444,10 @@
             setTimeout(() => { statusDiv.style.display = 'none'; }, 3000);
         }
         
-        loadGroupSettings();
+        (async function initPage(){
+            await ensureGroupId();
+            loadGroupSettings();
+        })();
     </script>
 </body>
 </html>
